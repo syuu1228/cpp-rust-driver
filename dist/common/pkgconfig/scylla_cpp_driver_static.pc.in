@@ -1,0 +1,12 @@
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+
+Name: scylla-cpp-rust-driver
+Description: ScyllaDB Cpp-Rust Driver
+Version: @version@
+Requires: openssl
+Libs: -L${libdir} -llibscylla_cpp_driver.a
+Cflags: -I${includedir}/scylladb
+URL: https://github.com/scylladb/cpp-rust-driver

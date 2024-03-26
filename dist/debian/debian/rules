@@ -1,0 +1,50 @@
+#!/usr/bin/make -f
+# -*- makefile -*-
+
+export DH_VERBOSE=1
+
+include /usr/share/dpkg/architecture.mk
+include /usr/share/dpkg/buildflags.mk
+include /usr/share/rustc/architecture.mk
+export CFLAGS CXXFLAGS CPPFLAGS LDFLAGS
+export DEB_HOST_RUST_TYPE DEB_HOST_GNU_TYPE
+export CARGO_HOME=$(CURDIR)/debian/cargo_home
+
+%:
+	dh $@ --buildsystem cargo
+
+override_dh_auto_clean:
+	cd scylla-rust-wrapper && env DEB_CARGO_CRATE=scylla-cpp-driver-rust_0.0.1 /usr/share/cargo/bin/cargo clean
+
+override_dh_auto_configure:
+	cd scylla-rust-wrapper && env DEB_CARGO_CRATE=scylla-cpp-driver-rust_0.0.1 /usr/share/cargo/bin/cargo prepare-debian $(CURDIR)/debian/cargo_registry --link-from-system
+	mv debian/cargo_home/config debian/cargo_home/config.bak
+	echo "[build]" > debian/cargo_home/config
+	grep "^rustflags" debian/cargo_home/config.bak >> debian/cargo_home/config
+
+override_dh_auto_test:
+	cd scylla-rust-wrapper && env DEB_CARGO_CRATE=scylla-cpp-driver-rust_0.0.1 /usr/share/cargo/bin/cargo test
+
+override_dh_auto_build:
+	cd scylla-rust-wrapper && env DEB_CARGO_CRATE=scylla-cpp-driver-rust_0.0.1 /usr/share/cargo/bin/cargo build
+	sed -e "s#@prefix@#%{_prefix}#g" \
+	-e "s#@exec_prefix@#%{_exec_prefix}#g" \
+	-e "s#@libdir@#%{_libdir}#g" \
+	-e "s#@includedir@#%{_includedir}#g" \
+	-e "s#@version@#%{version}#g" \
+	dist/common/pkgconfig/scylla_cpp_driver.pc.in > debian/scylla_cpp_driver.pc
+	sed -e "s#@prefix@#%{_prefix}#g" \
+	-e "s#@exec_prefix@#%{_exec_prefix}#g" \
+	-e "s#@libdir@#%{_libdir}#g" \
+	-e "s#@includedir@#%{_includedir}#g" \
+	-e "s#@version@#%{version}#g" \
+	dist/common/pkgconfig/scylla_cpp_driver_static.pc.in > debian/scylla_cpp_driver_static.pc
+
+override_dh_auto_install:
+	mkdir -p "$(CURDIR)"/debian/tmp/usr/lib/"$(DEB_HOST_GNU_TYPE)"
+	mkdir -p "$(CURDIR)"/debian/tmp/usr/lib/"$(DEB_HOST_GNU_TYPE)"/pkgconfig
+	mkdir -p "$(CURDIR)"/debian/tmp/usr/include/scylladb
+	install -Dpm0755 "$(CURDIR)"/scylla-rust-wrapper/target/"$(DEB_HOST_RUST_TYPE)"/debug/libscylla_cpp_driver.so "$(CURDIR)"/debian/tmp/usr/lib/"$(DEB_HOST_GNU_TYPE)"/
+	install -Dpm0755 "$(CURDIR)"/scylla-rust-wrapper/target/"$(DEB_HOST_RUST_TYPE)"/debug/*.a "$(CURDIR)"/debian/tmp/usr/lib/"$(DEB_HOST_GNU_TYPE)"
+	install -Dpm0644 "$(CURDIR)"/debian/*.pc "$(CURDIR)"/debian/tmp/usr/lib/"$(DEB_HOST_GNU_TYPE)"/pkgconfig
+	install -Dpm0644 "$(CURDIR)"/include/*.h "$(CURDIR)"/debian/tmp/usr/include/scylladb

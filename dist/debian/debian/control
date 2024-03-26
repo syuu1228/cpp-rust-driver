@@ -1,0 +1,33 @@
+Source: scylla-cpp-rust-driver
+Maintainer: Takuya ASADA <syuu@scylladb.com>
+Homepage: https://github.com/scylladb/cpp-rust-driver
+Section: libs
+Priority: optional
+Standards-Version: 4.6.1
+Build-Depends: debhelper-compat (= 13),
+	       dh-cargo,
+	       cargo,
+               rustc,
+               libstd-rust-dev,
+               dh-exec,
+               libssl-dev,
+               libclang-dev,
+               pkg-config,
+               openssl,
+               ca-certificates
+
+Package: libscylla-cpp-driver0
+Architecture: any
+Depends: ${misc:Depends},
+	 ${shlibs:Depends},
+Description: ScyllaDB Cpp-Rust Driver
+ API-compatible rewrite of https://github.com/scylladb/cpp-driver as a wrapper for Rust driver.
+
+Package: libscylla-cpp-driver-dev
+Section: libdevel
+Architecture: any
+Depends: libscylla-cpp-driver0 (= ${binary:Version}),
+         ${misc:Depends},
+         ${shlibs:Depends},
+Description: Development libraries for ScyllDB Cpp-Rust Driver
+ API-compatible rewrite of https://github.com/scylladb/cpp-driver as a wrapper for Rust driver.
